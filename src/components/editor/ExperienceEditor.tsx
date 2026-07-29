@@ -43,7 +43,7 @@ export function ExperienceEditor({ section }: { section: ExperienceSection }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <Field label="Role" value={item.role} onChange={(v) => update(item.id, 'role', v)} placeholder="Marketing Manager" />
             <Field label="Company" value={item.company} onChange={(v) => update(item.id, 'company', v)} placeholder="Acme Inc." />
             <Field label="Location" value={item.location} onChange={(v) => update(item.id, 'location', v)} placeholder="Toronto, ON" />

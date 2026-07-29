@@ -43,7 +43,7 @@ export function EducationEditor({ section }: { section: EducationSection }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <Field label="Degree / Program" value={item.degree} onChange={(v) => update(item.id, 'degree', v)} placeholder="B.A. Information Technology" />
             <Field label="School" value={item.school} onChange={(v) => update(item.id, 'school', v)} placeholder="York University" />
             <Field label="Location" value={item.location} onChange={(v) => update(item.id, 'location', v)} placeholder="Toronto, ON" />

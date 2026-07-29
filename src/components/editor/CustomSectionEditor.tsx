@@ -41,7 +41,7 @@ export function CustomSectionEditor({ section }: { section: CustomSection }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <Field label="Heading" value={item.heading} onChange={(v) => update(item.id, 'heading', v)} placeholder="Project title / award name" />
             <Field label="Subheading" value={item.subheading} onChange={(v) => update(item.id, 'subheading', v)} placeholder="Organization" />
             <Field label="Date" value={item.date} onChange={(v) => update(item.id, 'date', v)} placeholder="2024" />

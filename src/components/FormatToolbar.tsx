@@ -107,8 +107,8 @@ export function FormatToolbar({ viewAsPages, onToggleViewAsPages }: FormatToolba
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4 border-b border-slate-800 bg-slate-900/60 px-4 py-2.5 print:hidden">
-      <div className="flex items-center gap-1.5">
+    <div className="dark-scroll flex items-center gap-4 overflow-x-auto border-b border-slate-800 bg-slate-900/60 px-4 py-2.5 md:flex-wrap md:overflow-visible print:hidden">
+      <div className="flex shrink-0 items-center gap-1.5">
         <ToolLabel>Template</ToolLabel>
         <Select
           value={format.template}
@@ -117,7 +117,7 @@ export function FormatToolbar({ viewAsPages, onToggleViewAsPages }: FormatToolba
         />
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         <ToolLabel>Font</ToolLabel>
         <Select
           value={format.fontFamily}
@@ -126,22 +126,22 @@ export function FormatToolbar({ viewAsPages, onToggleViewAsPages }: FormatToolba
         />
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         <ToolLabel>Size</ToolLabel>
         <Stepper value={format.fontSize} onChange={(v) => setFormat('fontSize', v)} step={0.5} min={7} max={14} />
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         <ToolLabel>Line spacing</ToolLabel>
         <Stepper value={format.lineHeight} onChange={(v) => setFormat('lineHeight', v)} step={0.1} min={1} max={2} />
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         <ToolLabel>Margin</ToolLabel>
         <Stepper value={format.margin} onChange={(v) => setFormat('margin', v)} step={0.1} min={0.3} max={1.2} />
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5">
         <ToolLabel>Page</ToolLabel>
         <Select
           value={format.pageSize}
@@ -153,7 +153,7 @@ export function FormatToolbar({ viewAsPages, onToggleViewAsPages }: FormatToolba
         />
       </div>
 
-      <div className={`flex items-center gap-1.5 transition ${format.atsMode ? 'pointer-events-none opacity-30' : ''}`}>
+      <div className={`flex shrink-0 items-center gap-1.5 transition ${format.atsMode ? 'pointer-events-none opacity-30' : ''}`}>
         <ToolLabel>Accent</ToolLabel>
         <div className="flex items-center gap-1">
           {ACCENT_COLORS.map((color) => (
@@ -171,7 +171,7 @@ export function FormatToolbar({ viewAsPages, onToggleViewAsPages }: FormatToolba
         </div>
       </div>
 
-      <div className="ml-auto flex items-center gap-4">
+      <div className="ml-auto flex shrink-0 items-center gap-4">
         <ToggleSwitch
           checked={format.atsMode}
           onChange={(v) => setFormat('atsMode', v)}

@@ -12,7 +12,7 @@ export function ContactForm() {
   return (
     <div id="section-contact" className="scroll-mt-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
       <h2 className="mb-3 text-sm font-semibold text-slate-100">Contact</h2>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Full name" value={resume.contact.name} onChange={(v) => setField('name', v)} placeholder="Jane Doe" />
         <Field label="Job title" value={resume.contact.title} onChange={(v) => setField('title', v)} placeholder="Product Designer" />
         <Field label="Location" value={resume.contact.location} onChange={(v) => setField('location', v)} placeholder="Toronto, Ontario" />
