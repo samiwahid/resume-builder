@@ -198,7 +198,13 @@ function SectionContent({ section, template, accentColor }: { section: Section; 
                 dateRange={[item.startDate, item.endDate].filter(Boolean).join(' – ')}
               />
               {item.location && <p className="text-[0.85em] text-slate-500">{item.location}</p>}
-              {item.details && <p className="mt-1 text-slate-700">{item.details}</p>}
+              {linesToArray(item.details).length > 0 && (
+                <div className="mt-1 space-y-0.5 text-slate-700">
+                  {linesToArray(item.details).map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

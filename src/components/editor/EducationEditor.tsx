@@ -57,8 +57,9 @@ export function EducationEditor({ section }: { section: EducationSection }) {
             <TextAreaField
               label="Details (optional)"
               value={item.details}
-              rows={2}
-              placeholder="Relevant courses, honors, GPA..."
+              rows={3}
+              placeholder={'Relevant Courses: Database Management, Data Analysis...\nScholarship: Dean\'s Entrance Scholarship'}
+              hint="One line per detail — shown as separate lines, not bullets."
               onChange={(v) => update(item.id, 'details', v)}
             />
           </div>
