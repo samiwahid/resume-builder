@@ -13,6 +13,13 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* Custom scrollbars for the dark editor panes */
 .dark-scroll::-webkit-scrollbar {
   width: 10px;

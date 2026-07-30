@@ -4,12 +4,12 @@ import type { ResumeData } from './types'
 export function createDefaultResume(): ResumeData {
   return {
     contact: {
-      name: 'Jordan Rivera',
+      name: 'Bullet Mamu',
       title: 'Product Marketing Manager',
       location: 'Toronto, Ontario',
-      email: 'jordan.rivera@email.com',
+      email: 'bullet.mamu@email.com',
       phone: '+1 (555) 123-4567',
-      linkedin: 'in/jordan-rivera',
+      linkedin: 'in/bullet-mamu',
       website: '',
     },
     format: {

@@ -1,7 +1,6 @@
 import { useRef } from 'react'
-import { Download, FilePlus2, RotateCcw, Sparkles, Upload } from 'lucide-react'
+import { Download, Home, Sparkles, Upload } from 'lucide-react'
 import { useResume } from '../ResumeContext'
-import { createDefaultResume } from '../defaultResume'
 import type { ResumeData } from '../types'
 
 function RailButton({
@@ -25,37 +24,9 @@ function RailButton({
   )
 }
 
-export function IconRail() {
+export function IconRail({ onBackToDashboard }: { onBackToDashboard: () => void }) {
   const { resume, dispatch } = useResume()
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  function handleNew() {
-    if (confirm('Start a blank resume? This clears all current content.')) {
-      const fresh = createDefaultResume()
-      dispatch({
-        type: 'LOAD_RESUME',
-        data: {
-          ...fresh,
-          contact: { name: '', title: '', location: '', email: '', phone: '', linkedin: '', website: '' },
-          sections: fresh.sections.map((s) =>
-            s.kind === 'summary'
-              ? { ...s, content: '' }
-              : s.kind === 'skills'
-                ? { ...s, skills: '' }
-                : s.kind === 'experience' || s.kind === 'education' || s.kind === 'custom'
-                  ? { ...s, items: [] }
-                  : s
-          ),
-        },
-      })
-    }
-  }
-
-  function handleResetToSample() {
-    if (confirm('Reset to the original sample resume? This clears all current content.')) {
-      dispatch({ type: 'LOAD_RESUME', data: createDefaultResume() })
-    }
-  }
 
   function handleExport() {
     const blob = new Blob([JSON.stringify(resume, null, 2)], { type: 'application/json' })
@@ -79,6 +50,7 @@ export function IconRail() {
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result as string) as ResumeData
+        if (!confirm('Import this file? It will replace the current resume’s content.')) return
         dispatch({ type: 'LOAD_RESUME', data })
       } catch {
         alert('That file could not be read as a resume JSON export.')
@@ -90,11 +62,15 @@ export function IconRail() {
 
   return (
     <aside className="flex w-16 shrink-0 flex-col items-center gap-2 border-r border-slate-800 bg-slate-900 py-4 print:hidden">
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 text-white shadow-lg shadow-indigo-900/40">
+      <button
+        type="button"
+        onClick={onBackToDashboard}
+        title="Back to dashboard"
+        className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 text-white shadow-lg shadow-indigo-900/40 transition hover:brightness-110"
+      >
         <Sparkles size={18} />
-      </div>
-      <RailButton icon={<FilePlus2 size={19} />} label="New blank resume" onClick={handleNew} />
-      <RailButton icon={<RotateCcw size={19} />} label="Reset to sample resume" onClick={handleResetToSample} />
+      </button>
+      <RailButton icon={<Home size={19} />} label="Back to dashboard" onClick={onBackToDashboard} />
       <RailButton icon={<Upload size={19} />} label="Import resume (.json)" onClick={handleImportClick} />
       <RailButton icon={<Download size={19} />} label="Export resume (.json)" onClick={handleExport} />
       <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileChange} />

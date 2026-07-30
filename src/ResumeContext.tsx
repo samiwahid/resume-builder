@@ -3,27 +3,19 @@ import type { ReactNode } from 'react'
 import { resumeReducer } from './resumeReducer'
 import type { ResumeAction } from './resumeReducer'
 import { createDefaultResume } from './defaultResume'
+import { loadResumeData, saveResumeData } from './library'
 import type { ResumeData } from './types'
 
-const STORAGE_KEY = 'resume-builder-data'
-
-function loadInitialState(): ResumeData {
+function loadInitialState(resumeId: string): ResumeData {
   const defaults = createDefaultResume()
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as ResumeData
-      return {
-        ...defaults,
-        ...parsed,
-        contact: { ...defaults.contact, ...parsed.contact },
-        format: { ...defaults.format, ...parsed.format },
-      }
-    }
-  } catch {
-    // fall through to default
+  const parsed = loadResumeData(resumeId)
+  if (!parsed) return defaults
+  return {
+    ...defaults,
+    ...parsed,
+    contact: { ...defaults.contact, ...parsed.contact },
+    format: { ...defaults.format, ...parsed.format },
   }
-  return defaults
 }
 
 interface ResumeContextValue {
@@ -33,12 +25,12 @@ interface ResumeContextValue {
 
 const ResumeContext = createContext<ResumeContextValue | null>(null)
 
-export function ResumeProvider({ children }: { children: ReactNode }) {
-  const [resume, dispatch] = useReducer(resumeReducer, undefined, loadInitialState)
+export function ResumeProvider({ resumeId, children }: { resumeId: string; children: ReactNode }) {
+  const [resume, dispatch] = useReducer(resumeReducer, resumeId, loadInitialState)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(resume))
-  }, [resume])
+    saveResumeData(resumeId, resume)
+  }, [resumeId, resume])
 
   const value = useMemo(() => ({ resume, dispatch }), [resume])
 
