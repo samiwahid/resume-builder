@@ -39,11 +39,11 @@ export function EditorView({ resumeId, onBack }: { resumeId: string; onBack: () 
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-2">
-          <div className={mobileView === 'edit' ? 'block min-h-0' : 'hidden md:block'}>
+          <div className={`min-h-0 print:hidden ${mobileView === 'edit' ? 'block' : 'hidden md:block'}`}>
             <EditorPanel />
           </div>
           <div
-            className={`dark-scroll overflow-y-auto bg-slate-900 p-4 md:p-8 print:overflow-visible print:bg-white print:p-0 ${
+            className={`dark-scroll overflow-y-auto bg-slate-900 p-4 md:p-8 print:block print:overflow-visible print:bg-white print:p-0 ${
               mobileView === 'preview' ? 'block' : 'hidden md:block'
             }`}
           >
