@@ -37,6 +37,12 @@ export interface CustomEntry {
   bullets: string
 }
 
+export interface SkillCategory {
+  id: string
+  name: string
+  skills: string
+}
+
 export type SectionKind = 'summary' | 'experience' | 'education' | 'skills' | 'custom'
 
 interface BaseSection {
@@ -62,7 +68,7 @@ export interface EducationSection extends BaseSection {
 
 export interface SkillsSection extends BaseSection {
   kind: 'skills'
-  skills: string
+  categories: SkillCategory[]
 }
 
 export interface CustomSection extends BaseSection {

@@ -12,7 +12,7 @@ export function EditorView({ resumeId, onBack }: { resumeId: string; onBack: () 
 
   return (
     <ResumeProvider resumeId={resumeId}>
-      <IconRail onBackToDashboard={onBack} />
+      <IconRail resumeId={resumeId} onBackToDashboard={onBack} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <FormatToolbar viewAsPages={viewAsPages} onToggleViewAsPages={setViewAsPages} />

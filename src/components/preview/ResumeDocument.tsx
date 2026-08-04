@@ -156,19 +156,26 @@ function SectionContent({ section, template, accentColor }: { section: Section; 
     case 'summary':
       return <p className="text-slate-700">{section.content}</p>
 
-    case 'skills': {
-      const skills = linesToArray(section.skills)
+    case 'skills':
       return (
-        <p className="text-slate-700">
-          {skills.map((s, i) => (
-            <span key={i}>
-              {s}
-              {i < skills.length - 1 && <span style={{ color: accentColor }}> &nbsp;•&nbsp; </span>}
-            </span>
-          ))}
-        </p>
+        <div className="space-y-1">
+          {section.categories.map((cat) => {
+            const skills = linesToArray(cat.skills)
+            if (skills.length === 0) return null
+            return (
+              <p key={cat.id} className="text-slate-700">
+                {cat.name && <span className="font-semibold text-slate-900">{cat.name}: </span>}
+                {skills.map((s, i) => (
+                  <span key={i}>
+                    {s}
+                    {i < skills.length - 1 && <span style={{ color: accentColor }}> &nbsp;•&nbsp; </span>}
+                  </span>
+                ))}
+              </p>
+            )
+          })}
+        </div>
       )
-    }
 
     case 'experience':
       return (

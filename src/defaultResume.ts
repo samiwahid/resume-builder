@@ -84,8 +84,18 @@ export function createDefaultResume(): ResumeData {
         kind: 'skills',
         title: 'Skills',
         visible: true,
-        skills:
-          'Campaign Strategy\nMarketing Analytics\nSQL\nFigma\nHubSpot\nA/B Testing\nStakeholder Management',
+        categories: [
+          {
+            id: uuid(),
+            name: 'Core Skills',
+            skills: 'Campaign Strategy\nMarketing Analytics\nA/B Testing\nStakeholder Management',
+          },
+          {
+            id: uuid(),
+            name: 'Tools',
+            skills: 'SQL\nFigma\nHubSpot',
+          },
+        ],
       },
       {
         id: uuid(),

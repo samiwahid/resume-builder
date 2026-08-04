@@ -6,6 +6,7 @@ import type {
   ResumeData,
   Section,
   SectionKind,
+  SkillCategory,
 } from './types'
 
 export type ResumeAction =
@@ -17,7 +18,10 @@ export type ResumeAction =
   | { type: 'MOVE_SECTION'; id: string; direction: 'up' | 'down' }
   | { type: 'REORDER_SECTIONS'; ids: string[] }
   | { type: 'UPDATE_SUMMARY'; id: string; content: string }
-  | { type: 'UPDATE_SKILLS'; id: string; skills: string }
+  | { type: 'ADD_SKILL_CATEGORY'; sectionId: string }
+  | { type: 'UPDATE_SKILL_CATEGORY'; sectionId: string; categoryId: string; field: keyof SkillCategory; value: string }
+  | { type: 'REMOVE_SKILL_CATEGORY'; sectionId: string; categoryId: string }
+  | { type: 'MOVE_SKILL_CATEGORY'; sectionId: string; categoryId: string; direction: 'up' | 'down' }
   | { type: 'ADD_EXPERIENCE_ITEM'; sectionId: string }
   | { type: 'UPDATE_EXPERIENCE_ITEM'; sectionId: string; itemId: string; field: keyof ExperienceEntry; value: string | boolean }
   | { type: 'REMOVE_EXPERIENCE_ITEM'; sectionId: string; itemId: string }
@@ -45,7 +49,7 @@ const sectionDefaults: Record<SectionKind, () => Partial<Section>> = {
   summary: () => ({ kind: 'summary', content: '' }),
   experience: () => ({ kind: 'experience', items: [] }),
   education: () => ({ kind: 'education', items: [] }),
-  skills: () => ({ kind: 'skills', skills: '' }),
+  skills: () => ({ kind: 'skills', categories: [] }),
   custom: () => ({ kind: 'custom', items: [] }),
 }
 
@@ -97,12 +101,50 @@ export function resumeReducer(state: ResumeData, action: ResumeAction): ResumeDa
         ),
       }
 
-    case 'UPDATE_SKILLS':
+    case 'ADD_SKILL_CATEGORY':
       return {
         ...state,
         sections: state.sections.map((s) =>
-          s.id === action.id && s.kind === 'skills' ? { ...s, skills: action.skills } : s
+          s.id === action.sectionId && s.kind === 'skills'
+            ? { ...s, categories: [...s.categories, { id: uuid(), name: '', skills: '' }] }
+            : s
         ),
+      }
+
+    case 'UPDATE_SKILL_CATEGORY':
+      return {
+        ...state,
+        sections: state.sections.map((s) =>
+          s.id === action.sectionId && s.kind === 'skills'
+            ? {
+                ...s,
+                categories: s.categories.map((c) =>
+                  c.id === action.categoryId ? { ...c, [action.field]: action.value } : c
+                ),
+              }
+            : s
+        ),
+      }
+
+    case 'REMOVE_SKILL_CATEGORY':
+      return {
+        ...state,
+        sections: state.sections.map((s) =>
+          s.id === action.sectionId && s.kind === 'skills'
+            ? { ...s, categories: s.categories.filter((c) => c.id !== action.categoryId) }
+            : s
+        ),
+      }
+
+    case 'MOVE_SKILL_CATEGORY':
+      return {
+        ...state,
+        sections: state.sections.map((s) => {
+          if (s.id !== action.sectionId || s.kind !== 'skills') return s
+          const index = s.categories.findIndex((c) => c.id === action.categoryId)
+          if (index === -1) return s
+          return { ...s, categories: moveInArray(s.categories, index, action.direction) }
+        }),
       }
 
     case 'ADD_EXPERIENCE_ITEM':

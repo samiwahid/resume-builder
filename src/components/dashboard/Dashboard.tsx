@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FilePlus2, Pencil, Trash2 } from 'lucide-react'
-import { createResume, deleteResume, listResumes, renameResume } from '../../library'
+import { Copy, FilePlus2, Pencil, Trash2 } from 'lucide-react'
+import { createResume, deleteResume, duplicateResume, listResumes, renameResume } from '../../library'
 import type { ResumeMeta } from '../../library'
 import { ResumeThumbnail } from './ResumeThumbnail'
 
@@ -51,6 +51,13 @@ export function Dashboard({ onOpen }: DashboardProps) {
     renameResume(id, draftName)
     setRenamingId(null)
     refresh()
+  }
+
+  function handleDuplicate(meta: ResumeMeta) {
+    const name = prompt('Name this duplicate:', `${meta.name} (Copy)`)
+    if (name === null) return
+    const newMeta = duplicateResume(meta.id, name)
+    if (newMeta) refresh()
   }
 
   function handleDelete(meta: ResumeMeta) {
@@ -126,6 +133,14 @@ export function Dashboard({ onOpen }: DashboardProps) {
                   >
                     <Pencil size={13} />
                     Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicate(meta)}
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                  >
+                    <Copy size={13} />
+                    Duplicate
                   </button>
                   <button
                     type="button"

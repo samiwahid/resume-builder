@@ -1,6 +1,7 @@
 import { useRef } from 'react'
-import { Download, Home, Sparkles, Upload } from 'lucide-react'
+import { Copy, Download, Home, Sparkles, Upload } from 'lucide-react'
 import { useResume } from '../ResumeContext'
+import { duplicateResume, getResumeMeta } from '../library'
 import type { ResumeData } from '../types'
 
 function RailButton({
@@ -24,9 +25,23 @@ function RailButton({
   )
 }
 
-export function IconRail({ onBackToDashboard }: { onBackToDashboard: () => void }) {
+export function IconRail({
+  resumeId,
+  onBackToDashboard,
+}: {
+  resumeId: string
+  onBackToDashboard: () => void
+}) {
   const { resume, dispatch } = useResume()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleDuplicate() {
+    const currentName = getResumeMeta(resumeId)?.name || resume.contact.name || 'Untitled Resume'
+    const name = prompt('Name this duplicate:', `${currentName} (Copy)`)
+    if (name === null) return
+    const newMeta = duplicateResume(resumeId, name)
+    if (newMeta) alert(`Duplicated as "${newMeta.name}" — find it on your dashboard.`)
+  }
 
   function handleExport() {
     const blob = new Blob([JSON.stringify(resume, null, 2)], { type: 'application/json' })
@@ -71,6 +86,7 @@ export function IconRail({ onBackToDashboard }: { onBackToDashboard: () => void 
         <Sparkles size={18} />
       </button>
       <RailButton icon={<Home size={19} />} label="Back to dashboard" onClick={onBackToDashboard} />
+      <RailButton icon={<Copy size={19} />} label="Duplicate resume" onClick={handleDuplicate} />
       <RailButton icon={<Upload size={19} />} label="Import resume (.json)" onClick={handleImportClick} />
       <RailButton icon={<Download size={19} />} label="Export resume (.json)" onClick={handleExport} />
       <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileChange} />

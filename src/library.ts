@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid'
 import { createDefaultResume } from './defaultResume'
-import type { ResumeData } from './types'
+import type { ResumeData, Section } from './types'
 
 export interface ResumeMeta {
   id: string
@@ -35,11 +35,31 @@ function blankResume(): ResumeData {
       s.kind === 'summary'
         ? { ...s, content: '' }
         : s.kind === 'skills'
-          ? { ...s, skills: '' }
+          ? { ...s, categories: [] }
           : s.kind === 'experience' || s.kind === 'education' || s.kind === 'custom'
             ? { ...s, items: [] }
             : s
     ),
+  }
+}
+
+/** Upgrades sections saved by older versions of the app to the current shape (e.g. flat skills string -> categories). */
+function migrateResumeData(data: ResumeData): ResumeData {
+  return {
+    ...data,
+    sections: data.sections.map((s): Section => {
+      if (s.kind === 'skills' && !Array.isArray((s as unknown as { categories?: unknown }).categories)) {
+        const legacySkills = (s as unknown as { skills?: string }).skills ?? ''
+        return {
+          id: s.id,
+          kind: 'skills',
+          title: s.title,
+          visible: s.visible,
+          categories: legacySkills ? [{ id: uuid(), name: '', skills: legacySkills }] : [],
+        }
+      }
+      return s
+    }),
   }
 }
 
@@ -76,7 +96,7 @@ export function listResumes(): ResumeMeta[] {
 export function loadResumeData(id: string): ResumeData | null {
   try {
     const raw = localStorage.getItem(resumeKey(id))
-    return raw ? (JSON.parse(raw) as ResumeData) : null
+    return raw ? migrateResumeData(JSON.parse(raw) as ResumeData) : null
   } catch {
     return null
   }
@@ -107,6 +127,20 @@ export function renameResume(id: string, name: string) {
     entry.name = name.trim() || 'Untitled Resume'
     writeIndex(list)
   }
+}
+
+export function getResumeMeta(id: string): ResumeMeta | null {
+  return readIndex().find((m) => m.id === id) ?? null
+}
+
+export function duplicateResume(sourceId: string, name: string): ResumeMeta | null {
+  const data = loadResumeData(sourceId)
+  if (!data) return null
+  const now = new Date().toISOString()
+  const meta: ResumeMeta = { id: uuid(), name: name.trim() || 'Untitled Resume', createdAt: now, updatedAt: now }
+  localStorage.setItem(resumeKey(meta.id), JSON.stringify(data))
+  writeIndex([...readIndex(), meta])
+  return meta
 }
 
 export function deleteResume(id: string) {
