@@ -1,13 +1,24 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { useConfirm } from '../../ConfirmDialogContext'
 import { useResume } from '../../ResumeContext'
 import type { ExperienceEntry, ExperienceSection } from '../../types'
 import { Field, IconButton, TextAreaField } from '../ui/inputs'
 
 export function ExperienceEditor({ section }: { section: ExperienceSection }) {
   const { dispatch } = useResume()
+  const confirmDialog = useConfirm()
 
   function update(itemId: string, field: keyof ExperienceEntry, value: string | boolean) {
     dispatch({ type: 'UPDATE_EXPERIENCE_ITEM', sectionId: section.id, itemId, field, value })
+  }
+
+  async function handleRemove(itemId: string, label: string) {
+    const ok = await confirmDialog({
+      title: 'Remove this entry?',
+      message: `"${label}" will be removed from your experience.`,
+      confirmLabel: 'Remove entry',
+    })
+    if (ok) dispatch({ type: 'REMOVE_EXPERIENCE_ITEM', sectionId: section.id, itemId })
   }
 
   return (
@@ -36,7 +47,9 @@ export function ExperienceEditor({ section }: { section: ExperienceSection }) {
               <IconButton
                 title="Remove entry"
                 danger
-                onClick={() => dispatch({ type: 'REMOVE_EXPERIENCE_ITEM', sectionId: section.id, itemId: item.id })}
+                onClick={() =>
+                  handleRemove(item.id, item.role || item.company ? `${item.role || 'Role'} · ${item.company || 'Company'}` : `Entry ${index + 1}`)
+                }
               >
                 <Trash2 size={14} />
               </IconButton>

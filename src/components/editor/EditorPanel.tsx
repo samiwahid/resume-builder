@@ -1,3 +1,4 @@
+import { useConfirm } from '../../ConfirmDialogContext'
 import { useResume } from '../../ResumeContext'
 import type { Section } from '../../types'
 import { AddSectionMenu } from './AddSectionMenu'
@@ -26,6 +27,7 @@ function SectionBody({ section }: { section: Section }) {
 
 export function EditorPanel() {
   const { resume, dispatch } = useResume()
+  const confirmDialog = useConfirm()
 
   return (
     <div className="dark-scroll h-full space-y-4 overflow-y-auto bg-slate-950 p-4">
@@ -43,10 +45,13 @@ export function EditorPanel() {
           onToggleVisible={() => dispatch({ type: 'TOGGLE_SECTION_VISIBLE', id: section.id })}
           onMoveUp={() => dispatch({ type: 'MOVE_SECTION', id: section.id, direction: 'up' })}
           onMoveDown={() => dispatch({ type: 'MOVE_SECTION', id: section.id, direction: 'down' })}
-          onDelete={() => {
-            if (confirm(`Remove the "${section.title}" section?`)) {
-              dispatch({ type: 'REMOVE_SECTION', id: section.id })
-            }
+          onDelete={async () => {
+            const ok = await confirmDialog({
+              title: 'Remove this section?',
+              message: `The "${section.title}" section and everything in it will be removed from this resume.`,
+              confirmLabel: 'Remove section',
+            })
+            if (ok) dispatch({ type: 'REMOVE_SECTION', id: section.id })
           }}
         >
           <SectionBody section={section} />

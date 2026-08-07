@@ -1,13 +1,24 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { useConfirm } from '../../ConfirmDialogContext'
 import { useResume } from '../../ResumeContext'
 import type { CustomEntry, CustomSection } from '../../types'
 import { Field, IconButton, TextAreaField } from '../ui/inputs'
 
 export function CustomSectionEditor({ section }: { section: CustomSection }) {
   const { dispatch } = useResume()
+  const confirmDialog = useConfirm()
 
   function update(itemId: string, field: keyof CustomEntry, value: string) {
     dispatch({ type: 'UPDATE_CUSTOM_ITEM', sectionId: section.id, itemId, field, value })
+  }
+
+  async function handleRemove(itemId: string, label: string) {
+    const ok = await confirmDialog({
+      title: 'Remove this entry?',
+      message: `"${label}" will be removed from this section.`,
+      confirmLabel: 'Remove entry',
+    })
+    if (ok) dispatch({ type: 'REMOVE_CUSTOM_ITEM', sectionId: section.id, itemId })
   }
 
   return (
@@ -34,7 +45,7 @@ export function CustomSectionEditor({ section }: { section: CustomSection }) {
               <IconButton
                 title="Remove entry"
                 danger
-                onClick={() => dispatch({ type: 'REMOVE_CUSTOM_ITEM', sectionId: section.id, itemId: item.id })}
+                onClick={() => handleRemove(item.id, item.heading || `Entry ${index + 1}`)}
               >
                 <Trash2 size={14} />
               </IconButton>

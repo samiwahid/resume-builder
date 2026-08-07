@@ -1,13 +1,24 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { useConfirm } from '../../ConfirmDialogContext'
 import { useResume } from '../../ResumeContext'
 import type { EducationEntry, EducationSection } from '../../types'
 import { Field, IconButton, TextAreaField } from '../ui/inputs'
 
 export function EducationEditor({ section }: { section: EducationSection }) {
   const { dispatch } = useResume()
+  const confirmDialog = useConfirm()
 
   function update(itemId: string, field: keyof EducationEntry, value: string) {
     dispatch({ type: 'UPDATE_EDUCATION_ITEM', sectionId: section.id, itemId, field, value })
+  }
+
+  async function handleRemove(itemId: string, label: string) {
+    const ok = await confirmDialog({
+      title: 'Remove this entry?',
+      message: `"${label}" will be removed from your education.`,
+      confirmLabel: 'Remove entry',
+    })
+    if (ok) dispatch({ type: 'REMOVE_EDUCATION_ITEM', sectionId: section.id, itemId })
   }
 
   return (
@@ -36,7 +47,9 @@ export function EducationEditor({ section }: { section: EducationSection }) {
               <IconButton
                 title="Remove entry"
                 danger
-                onClick={() => dispatch({ type: 'REMOVE_EDUCATION_ITEM', sectionId: section.id, itemId: item.id })}
+                onClick={() =>
+                  handleRemove(item.id, item.degree || item.school ? `${item.degree || 'Degree'} · ${item.school || 'School'}` : `Entry ${index + 1}`)
+                }
               >
                 <Trash2 size={14} />
               </IconButton>

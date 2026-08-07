@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Copy, FilePlus2, Pencil, Trash2 } from 'lucide-react'
+import { useConfirm } from '../../ConfirmDialogContext'
 import { createResume, deleteResume, duplicateResume, listResumes, renameResume } from '../../library'
 import type { ResumeMeta } from '../../library'
 import { ResumeThumbnail } from './ResumeThumbnail'
@@ -22,6 +23,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onOpen }: DashboardProps) {
+  const confirmDialog = useConfirm()
   const [resumes, setResumes] = useState<ResumeMeta[]>([])
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
@@ -60,8 +62,13 @@ export function Dashboard({ onOpen }: DashboardProps) {
     if (newMeta) refresh()
   }
 
-  function handleDelete(meta: ResumeMeta) {
-    if (confirm(`Delete "${meta.name}"? This can't be undone.`)) {
+  async function handleDelete(meta: ResumeMeta) {
+    const ok = await confirmDialog({
+      title: 'Delete this resume?',
+      message: `"${meta.name}" will be permanently deleted. This can't be undone.`,
+      confirmLabel: 'Delete resume',
+    })
+    if (ok) {
       deleteResume(meta.id)
       refresh()
     }

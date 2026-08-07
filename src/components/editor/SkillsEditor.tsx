@@ -1,13 +1,24 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import { useConfirm } from '../../ConfirmDialogContext'
 import { useResume } from '../../ResumeContext'
 import type { SkillCategory, SkillsSection } from '../../types'
 import { Field, IconButton, TextAreaField } from '../ui/inputs'
 
 export function SkillsEditor({ section }: { section: SkillsSection }) {
   const { dispatch } = useResume()
+  const confirmDialog = useConfirm()
 
   function update(categoryId: string, field: keyof SkillCategory, value: string) {
     dispatch({ type: 'UPDATE_SKILL_CATEGORY', sectionId: section.id, categoryId, field, value })
+  }
+
+  async function handleRemove(categoryId: string, label: string) {
+    const ok = await confirmDialog({
+      title: 'Remove this category?',
+      message: `"${label}" and its skills will be removed.`,
+      confirmLabel: 'Remove category',
+    })
+    if (ok) dispatch({ type: 'REMOVE_SKILL_CATEGORY', sectionId: section.id, categoryId })
   }
 
   return (
@@ -34,7 +45,7 @@ export function SkillsEditor({ section }: { section: SkillsSection }) {
               <IconButton
                 title="Remove category"
                 danger
-                onClick={() => dispatch({ type: 'REMOVE_SKILL_CATEGORY', sectionId: section.id, categoryId: cat.id })}
+                onClick={() => handleRemove(cat.id, cat.name || `Category ${index + 1}`)}
               >
                 <Trash2 size={14} />
               </IconButton>
