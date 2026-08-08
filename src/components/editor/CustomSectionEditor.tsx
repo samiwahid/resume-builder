@@ -65,6 +65,7 @@ export function CustomSectionEditor({ section }: { section: CustomSection }) {
               rows={3}
               placeholder="One line per detail..."
               hint="One bullet per line."
+              formatting
               onChange={(v) => update(item.id, 'bullets', v)}
             />
           </div>

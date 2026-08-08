@@ -94,6 +94,8 @@ export interface FormatSettings {
   pageSize: 'letter' | 'a4'
   accentColor: string
   atsMode: boolean
+  /** id of the section that should start on a new page, or null for no manual break */
+  pageBreakSectionId: string | null
 }
 
 export interface ResumeData {

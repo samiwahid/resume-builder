@@ -66,6 +66,7 @@ export function SkillsEditor({ section }: { section: SkillsSection }) {
               rows={3}
               placeholder={'SQL\nFigma\nProject Management'}
               hint="One skill per line."
+              formatting
               onChange={(v) => update(cat.id, 'skills', v)}
             />
           </div>

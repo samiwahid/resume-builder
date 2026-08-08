@@ -87,6 +87,7 @@ export function ExperienceEditor({ section }: { section: ExperienceSection }) {
               rows={3}
               placeholder={'One achievement per line...'}
               hint="One bullet per line."
+              formatting
               onChange={(v) => update(item.id, 'bullets', v)}
             />
           </div>

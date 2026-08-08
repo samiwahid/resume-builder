@@ -21,6 +21,7 @@ export function createDefaultResume(): ResumeData {
       pageSize: 'letter',
       accentColor: '#1e293b',
       atsMode: false,
+      pageBreakSectionId: null,
     },
     sections: [
       {

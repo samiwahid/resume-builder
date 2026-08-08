@@ -10,6 +10,7 @@ export function SummaryEditor({ section }: { section: SummarySection }) {
       value={section.content}
       rows={4}
       placeholder="A short pitch highlighting your experience and what you're looking for next."
+      formatting
       onChange={(content) => dispatch({ type: 'UPDATE_SUMMARY', id: section.id, content })}
     />
   )

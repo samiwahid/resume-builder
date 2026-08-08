@@ -34,7 +34,7 @@ export type ResumeAction =
   | { type: 'UPDATE_CUSTOM_ITEM'; sectionId: string; itemId: string; field: keyof CustomEntry; value: string }
   | { type: 'REMOVE_CUSTOM_ITEM'; sectionId: string; itemId: string }
   | { type: 'MOVE_CUSTOM_ITEM'; sectionId: string; itemId: string; direction: 'up' | 'down' }
-  | { type: 'SET_FORMAT'; field: keyof ResumeData['format']; value: string | number | boolean }
+  | { type: 'SET_FORMAT'; field: keyof ResumeData['format']; value: string | number | boolean | null }
   | { type: 'LOAD_RESUME'; data: ResumeData }
 
 function moveInArray<T>(arr: T[], index: number, direction: 'up' | 'down'): T[] {

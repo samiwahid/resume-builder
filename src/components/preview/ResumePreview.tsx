@@ -9,7 +9,7 @@ interface ResumePreviewProps {
 const PX_PER_IN = 96
 
 export function ResumePreview({ viewAsPages }: ResumePreviewProps) {
-  const { resume } = useResume()
+  const { resume, dispatch } = useResume()
   const { format } = resume
   const page = PAGE_SIZE_IN[format.pageSize]
 
@@ -56,7 +56,14 @@ export function ResumePreview({ viewAsPages }: ResumePreviewProps) {
         className="mx-auto overflow-hidden"
         style={{ width: pageWidthPx * scale, height: pageHeightPx * scale }}
       >
-        <ResumeDocument resume={resume} scale={scale} viewAsPages={viewAsPages} id="resume-page" pageRef={pageRef} />
+        <ResumeDocument
+          resume={resume}
+          scale={scale}
+          viewAsPages={viewAsPages}
+          id="resume-page"
+          pageRef={pageRef}
+          onPageBreakChange={(sectionId) => dispatch({ type: 'SET_FORMAT', field: 'pageBreakSectionId', value: sectionId })}
+        />
       </div>
     </div>
   )

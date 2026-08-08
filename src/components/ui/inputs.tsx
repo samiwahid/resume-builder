@@ -1,4 +1,8 @@
+import { useRef } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
+import { Bold, CaseUpper, Italic } from 'lucide-react'
+import { autoCapitalizeOnInput, toggleFormatMarker } from '../../textFormatting'
+import type { FormatMarker } from '../../textFormatting'
 
 interface FieldProps {
   label: string
@@ -30,17 +34,61 @@ interface TextAreaFieldProps {
   placeholder?: string
   rows?: number
   hint?: string
+  formatting?: boolean
 }
 
-export function TextAreaField({ label, value, onChange, placeholder, rows = 4, hint }: TextAreaFieldProps) {
+const FORMAT_BUTTONS: { marker: FormatMarker; title: string; icon: ReactNode }[] = [
+  { marker: 'bold', title: 'Bold selected text (**text**)', icon: <Bold size={12} /> },
+  { marker: 'italic', title: 'Italicize selected text (*text*)', icon: <Italic size={12} /> },
+  { marker: 'caps', title: 'Capitalize selected text (::text::)', icon: <CaseUpper size={12} /> },
+]
+
+export function TextAreaField({ label, value, onChange, placeholder, rows = 4, hint, formatting }: TextAreaFieldProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
+    onChange(autoCapitalizeOnInput(value, e.target.value))
+  }
+
+  function applyMarker(marker: FormatMarker) {
+    const el = textareaRef.current
+    if (!el) return
+    const result = toggleFormatMarker(value, el.selectionStart, el.selectionEnd, marker)
+    if (!result) return
+    onChange(result.value)
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(result.selectionStart, result.selectionEnd)
+    })
+  }
+
   return (
     <label className="flex flex-col gap-1 text-left">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</span>
+        {formatting && (
+          <div className="flex items-center gap-0.5">
+            {FORMAT_BUTTONS.map((btn) => (
+              <button
+                key={btn.marker}
+                type="button"
+                title={btn.title}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => applyMarker(btn.marker)}
+                className="flex h-5 w-5 items-center justify-center rounded text-slate-500 transition hover:bg-slate-700 hover:text-slate-200"
+              >
+                {btn.icon}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <textarea
+        ref={textareaRef}
         value={value}
         placeholder={placeholder}
         rows={rows}
-        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+        onChange={handleChange}
         className="resize-y rounded-md border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm leading-relaxed text-slate-100 placeholder-slate-500 outline-none transition focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
       />
       {hint && <span className="text-[11px] text-slate-500">{hint}</span>}

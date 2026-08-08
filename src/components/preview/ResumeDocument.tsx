@@ -1,4 +1,6 @@
-import { Globe, Link, Mail, MapPin, Phone } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { Globe, Link, Mail, MapPin, Phone, X } from 'lucide-react'
+import { renderFormattedText } from '../../textFormatting'
 import type { ContactInfo, ResumeData, Section, TemplateId } from '../../types'
 
 export const PAGE_SIZE_IN: Record<'letter' | 'a4', { w: number; h: number }> = {
@@ -143,7 +145,7 @@ function Bullets({ items }: { items: string[] }) {
   return (
     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-slate-700">
       {items.map((b, i) => (
-        <li key={i}>{b}</li>
+        <li key={i}>{renderFormattedText(b)}</li>
       ))}
     </ul>
   )
@@ -154,7 +156,7 @@ function SectionContent({ section, template, accentColor }: { section: Section; 
 
   switch (section.kind) {
     case 'summary':
-      return <p className="text-slate-700">{section.content}</p>
+      return <p className="text-slate-700">{renderFormattedText(section.content)}</p>
 
     case 'skills':
       return (
@@ -167,7 +169,7 @@ function SectionContent({ section, template, accentColor }: { section: Section; 
                 {cat.name && <span className="font-semibold text-slate-900">{cat.name}: </span>}
                 {skills.map((s, i) => (
                   <span key={i}>
-                    {s}
+                    {renderFormattedText(s)}
                     {i < skills.length - 1 && <span style={{ color: accentColor }}> &nbsp;•&nbsp; </span>}
                   </span>
                 ))}
@@ -208,7 +210,7 @@ function SectionContent({ section, template, accentColor }: { section: Section; 
               {linesToArray(item.details).length > 0 && (
                 <div className="mt-1 space-y-0.5 text-slate-700">
                   {linesToArray(item.details).map((line, i) => (
-                    <p key={i}>{line}</p>
+                    <p key={i}>{renderFormattedText(line)}</p>
                   ))}
                 </div>
               )}
@@ -231,20 +233,111 @@ function SectionContent({ section, template, accentColor }: { section: Section; 
   }
 }
 
+function PageBreakGap({
+  sectionId,
+  active,
+  interactive,
+  onSet,
+  onClear,
+  onDragStart,
+  gapRef,
+}: {
+  sectionId: string
+  active: boolean
+  interactive: boolean
+  onSet: () => void
+  onClear: () => void
+  onDragStart: () => void
+  gapRef: (el: HTMLDivElement | null) => void
+}) {
+  return (
+    <div ref={gapRef} data-section-id={sectionId} className="group/gap relative flex h-4 items-center print:hidden">
+      {active ? (
+        <div className="flex w-full items-center gap-1.5">
+          <div
+            onMouseDown={(e) => {
+              if (!interactive) return
+              e.preventDefault()
+              onDragStart()
+            }}
+            className={`h-0 flex-1 border-t-2 border-dashed border-indigo-400 ${interactive ? 'cursor-ns-resize' : ''}`}
+          />
+          <span className="shrink-0 rounded bg-indigo-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white">
+            Page break
+          </span>
+          {interactive && (
+            <button
+              type="button"
+              onClick={onClear}
+              title="Remove page break"
+              className="shrink-0 rounded-full bg-slate-200 p-0.5 text-slate-600 transition hover:bg-red-100 hover:text-red-600"
+            >
+              <X size={10} />
+            </button>
+          )}
+        </div>
+      ) : interactive ? (
+        <button
+          type="button"
+          onClick={onSet}
+          title="Add page break here"
+          className="h-0 w-full border-t border-dashed border-transparent opacity-0 transition group-hover/gap:border-slate-300 group-hover/gap:opacity-100"
+        />
+      ) : null}
+    </div>
+  )
+}
+
 export interface ResumeDocumentProps {
   resume: ResumeData
   scale: number
   viewAsPages?: boolean
   id?: string
   pageRef?: React.Ref<HTMLDivElement>
+  onPageBreakChange?: (sectionId: string | null) => void
 }
 
 /** Pure, context-free renderer of a resume as a styled paper page. Takes resume data directly as a prop so it can be reused for the live editor preview and for read-only thumbnails (e.g. on the dashboard). */
-export function ResumeDocument({ resume, scale, viewAsPages, id, pageRef }: ResumeDocumentProps) {
+export function ResumeDocument({ resume, scale, viewAsPages, id, pageRef, onPageBreakChange }: ResumeDocumentProps) {
   const { format } = resume
   const page = PAGE_SIZE_IN[format.pageSize]
   const visibleSections = resume.sections.filter((s) => s.visible)
   const effectiveAccent = format.atsMode ? '#1e293b' : format.accentColor
+  const interactive = !!onPageBreakChange
+
+  const gapElements = useRef(new Map<string, HTMLDivElement>())
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragPreviewId, setDragPreviewId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isDragging) return
+    function handleMove(e: MouseEvent) {
+      let closestId: string | null = null
+      let closestDist = Infinity
+      gapElements.current.forEach((el, sectionId) => {
+        const rect = el.getBoundingClientRect()
+        const dist = Math.abs(e.clientY - (rect.top + rect.height / 2))
+        if (dist < closestDist) {
+          closestDist = dist
+          closestId = sectionId
+        }
+      })
+      if (closestId) setDragPreviewId(closestId)
+    }
+    function handleUp() {
+      setIsDragging(false)
+      onPageBreakChange?.(dragPreviewId)
+    }
+    document.addEventListener('mousemove', handleMove)
+    document.addEventListener('mouseup', handleUp)
+    return () => {
+      document.removeEventListener('mousemove', handleMove)
+      document.removeEventListener('mouseup', handleUp)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging])
+
+  const activeBreakId = isDragging ? dragPreviewId : resume.format.pageBreakSectionId
 
   const pageStyle: React.CSSProperties = {
     width: `${page.w}in`,
@@ -264,11 +357,33 @@ export function ResumeDocument({ resume, scale, viewAsPages, id, pageRef }: Resu
     <div id={id} ref={pageRef} className="bg-white text-slate-800 shadow-2xl shadow-black/40" style={pageStyle}>
       <Header contact={resume.contact} template={format.template} accentColor={effectiveAccent} atsMode={format.atsMode} />
       <div className={format.template === 'compact' ? 'space-y-3.5' : 'space-y-5'}>
-        {visibleSections.map((section) => (
-          <section key={section.id} className="break-inside-avoid">
-            <SectionHeading title={section.title} template={format.template} accentColor={effectiveAccent} />
-            <SectionContent section={section} template={format.template} accentColor={effectiveAccent} />
-          </section>
+        {visibleSections.map((section, index) => (
+          <Fragment key={section.id}>
+            {viewAsPages && index > 0 && (
+              <PageBreakGap
+                sectionId={section.id}
+                active={activeBreakId === section.id}
+                interactive={interactive}
+                onSet={() => onPageBreakChange?.(section.id)}
+                onClear={() => onPageBreakChange?.(null)}
+                onDragStart={() => {
+                  setIsDragging(true)
+                  setDragPreviewId(section.id)
+                }}
+                gapRef={(el) => {
+                  if (el) gapElements.current.set(section.id, el)
+                  else gapElements.current.delete(section.id)
+                }}
+              />
+            )}
+            <section
+              className="break-inside-avoid"
+              style={section.id === resume.format.pageBreakSectionId ? { breakBefore: 'page', pageBreakBefore: 'always' } : undefined}
+            >
+              <SectionHeading title={section.title} template={format.template} accentColor={effectiveAccent} />
+              <SectionContent section={section} template={format.template} accentColor={effectiveAccent} />
+            </section>
+          </Fragment>
         ))}
       </div>
     </div>
