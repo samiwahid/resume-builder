@@ -34,7 +34,8 @@ export type ResumeAction =
   | { type: 'UPDATE_CUSTOM_ITEM'; sectionId: string; itemId: string; field: keyof CustomEntry; value: string }
   | { type: 'REMOVE_CUSTOM_ITEM'; sectionId: string; itemId: string }
   | { type: 'MOVE_CUSTOM_ITEM'; sectionId: string; itemId: string; direction: 'up' | 'down' }
-  | { type: 'SET_FORMAT'; field: keyof ResumeData['format']; value: string | number | boolean | null }
+  | { type: 'SET_FORMAT'; field: keyof ResumeData['format']; value: string | number | boolean }
+  | { type: 'SET_PAGE_BREAKS'; blockKeys: string[] }
   | { type: 'LOAD_RESUME'; data: ResumeData }
 
 function moveInArray<T>(arr: T[], index: number, direction: 'up' | 'down'): T[] {
@@ -322,6 +323,9 @@ export function resumeReducer(state: ResumeData, action: ResumeAction): ResumeDa
 
     case 'SET_FORMAT':
       return { ...state, format: { ...state.format, [action.field]: action.value } }
+
+    case 'SET_PAGE_BREAKS':
+      return { ...state, format: { ...state.format, pageBreaksBefore: action.blockKeys } }
 
     case 'LOAD_RESUME':
       return action.data

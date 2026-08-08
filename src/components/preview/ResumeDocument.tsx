@@ -1,12 +1,29 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Globe, Link, Mail, MapPin, Phone, X } from 'lucide-react'
 import { renderFormattedText } from '../../textFormatting'
-import type { ContactInfo, ResumeData, Section, TemplateId } from '../../types'
+import type {
+  ContactInfo,
+  CustomEntry,
+  EducationEntry,
+  ExperienceEntry,
+  ResumeData,
+  Section,
+  SkillsSection,
+  TemplateId,
+} from '../../types'
 
 export const PAGE_SIZE_IN: Record<'letter' | 'a4', { w: number; h: number }> = {
   letter: { w: 8.5, h: 11 },
   a4: { w: 8.27, h: 11.69 },
 }
+
+const PX_PER_IN = 96
+// Matches the mt-5 / mt-3.5 gap previously used between different sections
+const SECTION_GAP_PX = { normal: 20, compact: 14 }
+// Matches the mt-3.5 / mt-2.5 gap previously used between entries within the same section
+const ENTRY_GAP_PX = { normal: 14, compact: 10 }
+// Matches the Header's own mb-5
+const HEADER_BOTTOM_MARGIN_PX = 20
 
 function linesToArray(text: string): string[] {
   return text
@@ -120,15 +137,7 @@ function SectionHeading({ title, template, accentColor }: { title: string; templ
   )
 }
 
-function EntryRow({
-  title,
-  subtitle,
-  dateRange,
-}: {
-  title: string
-  subtitle: string
-  dateRange: string
-}) {
+function EntryRow({ title, subtitle, dateRange }: { title: string; subtitle: string; dateRange: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <p className="font-semibold text-slate-900">
@@ -151,90 +160,178 @@ function Bullets({ items }: { items: string[] }) {
   )
 }
 
-function SectionContent({ section, template, accentColor }: { section: Section; template: TemplateId; accentColor: string }) {
-  const spacing = template === 'compact' ? 'space-y-2.5' : 'space-y-3.5'
+function ExperienceEntryBody({ item }: { item: ExperienceEntry }) {
+  return (
+    <>
+      <EntryRow
+        title={item.role || 'Role'}
+        subtitle={item.company}
+        dateRange={[item.startDate, item.current ? 'Present' : item.endDate].filter(Boolean).join(' – ')}
+      />
+      {item.location && <p className="text-[0.85em] text-slate-500">{item.location}</p>}
+      <Bullets items={linesToArray(item.bullets)} />
+    </>
+  )
+}
 
-  switch (section.kind) {
-    case 'summary':
-      return <p className="text-slate-700">{renderFormattedText(section.content)}</p>
-
-    case 'skills':
-      return (
-        <div className="space-y-1">
-          {section.categories.map((cat) => {
-            const skills = linesToArray(cat.skills)
-            if (skills.length === 0) return null
-            return (
-              <p key={cat.id} className="text-slate-700">
-                {cat.name && <span className="font-semibold text-slate-900">{cat.name}: </span>}
-                {skills.map((s, i) => (
-                  <span key={i}>
-                    {renderFormattedText(s)}
-                    {i < skills.length - 1 && <span style={{ color: accentColor }}> &nbsp;•&nbsp; </span>}
-                  </span>
-                ))}
-              </p>
-            )
-          })}
-        </div>
-      )
-
-    case 'experience':
-      return (
-        <div className={spacing}>
-          {section.items.map((item) => (
-            <div key={item.id} className="break-inside-avoid">
-              <EntryRow
-                title={item.role || 'Role'}
-                subtitle={item.company}
-                dateRange={[item.startDate, item.current ? 'Present' : item.endDate].filter(Boolean).join(' – ')}
-              />
-              {item.location && <p className="text-[0.85em] text-slate-500">{item.location}</p>}
-              <Bullets items={linesToArray(item.bullets)} />
-            </div>
+function EducationEntryBody({ item }: { item: EducationEntry }) {
+  return (
+    <>
+      <EntryRow
+        title={item.degree || 'Degree'}
+        subtitle={item.school}
+        dateRange={[item.startDate, item.endDate].filter(Boolean).join(' – ')}
+      />
+      {item.location && <p className="text-[0.85em] text-slate-500">{item.location}</p>}
+      {linesToArray(item.details).length > 0 && (
+        <div className="mt-1 space-y-0.5 text-slate-700">
+          {linesToArray(item.details).map((line, i) => (
+            <p key={i}>{renderFormattedText(line)}</p>
           ))}
         </div>
-      )
+      )}
+    </>
+  )
+}
 
-    case 'education':
-      return (
-        <div className={spacing}>
-          {section.items.map((item) => (
-            <div key={item.id} className="break-inside-avoid">
-              <EntryRow
-                title={item.degree || 'Degree'}
-                subtitle={item.school}
-                dateRange={[item.startDate, item.endDate].filter(Boolean).join(' – ')}
-              />
-              {item.location && <p className="text-[0.85em] text-slate-500">{item.location}</p>}
-              {linesToArray(item.details).length > 0 && (
-                <div className="mt-1 space-y-0.5 text-slate-700">
-                  {linesToArray(item.details).map((line, i) => (
-                    <p key={i}>{renderFormattedText(line)}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )
+function CustomEntryBody({ item }: { item: CustomEntry }) {
+  return (
+    <>
+      <EntryRow title={item.heading || 'Entry'} subtitle={item.subheading} dateRange={item.date} />
+      <Bullets items={linesToArray(item.bullets)} />
+    </>
+  )
+}
 
-    case 'custom':
-      return (
-        <div className={spacing}>
-          {section.items.map((item) => (
-            <div key={item.id} className="break-inside-avoid">
-              <EntryRow title={item.heading || 'Entry'} subtitle={item.subheading} dateRange={item.date} />
-              <Bullets items={linesToArray(item.bullets)} />
-            </div>
-          ))}
-        </div>
-      )
+function SkillsBody({ section, accentColor }: { section: SkillsSection; accentColor: string }) {
+  return (
+    <div className="space-y-1">
+      {section.categories.map((cat) => {
+        const skills = linesToArray(cat.skills)
+        if (skills.length === 0) return null
+        return (
+          <p key={cat.id} className="text-slate-700">
+            {cat.name && <span className="font-semibold text-slate-900">{cat.name}: </span>}
+            {skills.map((s, i) => (
+              <span key={i}>
+                {renderFormattedText(s)}
+                {i < skills.length - 1 && <span style={{ color: accentColor }}> &nbsp;•&nbsp; </span>}
+              </span>
+            ))}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
+/** The atomic unit of pagination: either a whole single-content section (Summary/Skills), or one entry
+ * within a multi-entry section. A section's heading travels with its first entry so it's never orphaned
+ * alone at the bottom of a page. */
+interface RenderBlock {
+  key: string
+  sectionId: string
+  node: React.ReactNode
+}
+
+function buildBlocks(sections: Section[], template: TemplateId, accentColor: string): RenderBlock[] {
+  const blocks: RenderBlock[] = []
+
+  for (const section of sections) {
+    if (section.kind === 'summary') {
+      blocks.push({
+        key: section.id,
+        sectionId: section.id,
+        node: (
+          <>
+            <SectionHeading title={section.title} template={template} accentColor={accentColor} />
+            <p className="text-slate-700">{renderFormattedText(section.content)}</p>
+          </>
+        ),
+      })
+    } else if (section.kind === 'skills') {
+      blocks.push({
+        key: section.id,
+        sectionId: section.id,
+        node: (
+          <>
+            <SectionHeading title={section.title} template={template} accentColor={accentColor} />
+            <SkillsBody section={section} accentColor={accentColor} />
+          </>
+        ),
+      })
+    } else if (section.kind === 'experience') {
+      if (section.items.length === 0) {
+        blocks.push({ key: section.id, sectionId: section.id, node: <SectionHeading title={section.title} template={template} accentColor={accentColor} /> })
+      }
+      section.items.forEach((item, idx) => {
+        const isFirst = idx === 0
+        blocks.push({
+          key: isFirst ? section.id : `${section.id}:${item.id}`,
+          sectionId: section.id,
+          node: (
+            <>
+              {isFirst && <SectionHeading title={section.title} template={template} accentColor={accentColor} />}
+              <div className="break-inside-avoid">
+                <ExperienceEntryBody item={item} />
+              </div>
+            </>
+          ),
+        })
+      })
+    } else if (section.kind === 'education') {
+      if (section.items.length === 0) {
+        blocks.push({ key: section.id, sectionId: section.id, node: <SectionHeading title={section.title} template={template} accentColor={accentColor} /> })
+      }
+      section.items.forEach((item, idx) => {
+        const isFirst = idx === 0
+        blocks.push({
+          key: isFirst ? section.id : `${section.id}:${item.id}`,
+          sectionId: section.id,
+          node: (
+            <>
+              {isFirst && <SectionHeading title={section.title} template={template} accentColor={accentColor} />}
+              <div className="break-inside-avoid">
+                <EducationEntryBody item={item} />
+              </div>
+            </>
+          ),
+        })
+      })
+    } else {
+      // custom
+      if (section.items.length === 0) {
+        blocks.push({ key: section.id, sectionId: section.id, node: <SectionHeading title={section.title} template={template} accentColor={accentColor} /> })
+      }
+      section.items.forEach((item, idx) => {
+        const isFirst = idx === 0
+        blocks.push({
+          key: isFirst ? section.id : `${section.id}:${item.id}`,
+          sectionId: section.id,
+          node: (
+            <>
+              {isFirst && <SectionHeading title={section.title} template={template} accentColor={accentColor} />}
+              <div className="break-inside-avoid">
+                <CustomEntryBody item={item} />
+              </div>
+            </>
+          ),
+        })
+      })
+    }
   }
+
+  return blocks
+}
+
+function blockMarginClass(prev: RenderBlock | undefined, block: RenderBlock, compact: boolean): string {
+  if (!prev) return ''
+  if (prev.sectionId === block.sectionId) return compact ? 'mt-2.5' : 'mt-3.5'
+  return compact ? 'mt-3.5' : 'mt-5'
 }
 
 function PageBreakGap({
-  sectionId,
+  blockKey,
   active,
   interactive,
   onSet,
@@ -242,7 +339,7 @@ function PageBreakGap({
   onDragStart,
   gapRef,
 }: {
-  sectionId: string
+  blockKey: string
   active: boolean
   interactive: boolean
   onSet: () => void
@@ -251,7 +348,7 @@ function PageBreakGap({
   gapRef: (el: HTMLDivElement | null) => void
 }) {
   return (
-    <div ref={gapRef} data-section-id={sectionId} className="group/gap relative flex h-4 items-center print:hidden">
+    <div ref={gapRef} data-block-key={blockKey} className="group/gap relative flex h-4 items-center print:hidden">
       {active ? (
         <div className="flex w-full items-center gap-1.5">
           <div
@@ -288,56 +385,31 @@ function PageBreakGap({
   )
 }
 
-export interface ResumeDocumentProps {
-  resume: ResumeData
-  scale: number
-  viewAsPages?: boolean
-  id?: string
-  pageRef?: React.Ref<HTMLDivElement>
-  onPageBreakChange?: (sectionId: string | null) => void
+interface PageDims {
+  w: number
+  h: number
 }
 
-/** Pure, context-free renderer of a resume as a styled paper page. Takes resume data directly as a prop so it can be reused for the live editor preview and for read-only thumbnails (e.g. on the dashboard). */
-export function ResumeDocument({ resume, scale, viewAsPages, id, pageRef, onPageBreakChange }: ResumeDocumentProps) {
+function SimplePage({
+  resume,
+  page,
+  scale,
+  id,
+  pageRef,
+  blocks,
+  pageBreaksBefore,
+}: {
+  resume: ResumeData
+  page: PageDims
+  scale: number
+  id?: string
+  pageRef?: React.Ref<HTMLDivElement>
+  blocks: RenderBlock[]
+  pageBreaksBefore: string[]
+}) {
   const { format } = resume
-  const page = PAGE_SIZE_IN[format.pageSize]
-  const visibleSections = resume.sections.filter((s) => s.visible)
   const effectiveAccent = format.atsMode ? '#1e293b' : format.accentColor
-  const interactive = !!onPageBreakChange
-
-  const gapElements = useRef(new Map<string, HTMLDivElement>())
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragPreviewId, setDragPreviewId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isDragging) return
-    function handleMove(e: MouseEvent) {
-      let closestId: string | null = null
-      let closestDist = Infinity
-      gapElements.current.forEach((el, sectionId) => {
-        const rect = el.getBoundingClientRect()
-        const dist = Math.abs(e.clientY - (rect.top + rect.height / 2))
-        if (dist < closestDist) {
-          closestDist = dist
-          closestId = sectionId
-        }
-      })
-      if (closestId) setDragPreviewId(closestId)
-    }
-    function handleUp() {
-      setIsDragging(false)
-      onPageBreakChange?.(dragPreviewId)
-    }
-    document.addEventListener('mousemove', handleMove)
-    document.addEventListener('mouseup', handleUp)
-    return () => {
-      document.removeEventListener('mousemove', handleMove)
-      document.removeEventListener('mouseup', handleUp)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging])
-
-  const activeBreakId = isDragging ? dragPreviewId : resume.format.pageBreakSectionId
+  const compact = format.template === 'compact'
 
   const pageStyle: React.CSSProperties = {
     width: `${page.w}in`,
@@ -348,44 +420,268 @@ export function ResumeDocument({ resume, scale, viewAsPages, id, pageRef, onPage
     lineHeight: format.lineHeight,
     transform: `scale(${scale})`,
     transformOrigin: 'top left',
-    backgroundImage: viewAsPages
-      ? `repeating-linear-gradient(to bottom, transparent 0, transparent calc(${page.h}in - 1px), #cbd5e1 calc(${page.h}in - 1px), #cbd5e1 ${page.h}in)`
-      : undefined,
   }
 
   return (
     <div id={id} ref={pageRef} className="bg-white text-slate-800 shadow-2xl shadow-black/40" style={pageStyle}>
       <Header contact={resume.contact} template={format.template} accentColor={effectiveAccent} atsMode={format.atsMode} />
-      <div className={format.template === 'compact' ? 'space-y-3.5' : 'space-y-5'}>
-        {visibleSections.map((section, index) => (
-          <Fragment key={section.id}>
-            {viewAsPages && index > 0 && (
-              <PageBreakGap
-                sectionId={section.id}
-                active={activeBreakId === section.id}
-                interactive={interactive}
-                onSet={() => onPageBreakChange?.(section.id)}
-                onClear={() => onPageBreakChange?.(null)}
-                onDragStart={() => {
-                  setIsDragging(true)
-                  setDragPreviewId(section.id)
-                }}
-                gapRef={(el) => {
-                  if (el) gapElements.current.set(section.id, el)
-                  else gapElements.current.delete(section.id)
-                }}
-              />
-            )}
-            <section
-              className="break-inside-avoid"
-              style={section.id === resume.format.pageBreakSectionId ? { breakBefore: 'page', pageBreakBefore: 'always' } : undefined}
-            >
-              <SectionHeading title={section.title} template={format.template} accentColor={effectiveAccent} />
-              <SectionContent section={section} template={format.template} accentColor={effectiveAccent} />
-            </section>
-          </Fragment>
+      {blocks.map((block, i) => (
+        <div
+          key={block.key}
+          className={blockMarginClass(blocks[i - 1], block, compact)}
+          style={pageBreaksBefore.includes(block.key) ? { breakBefore: 'page', pageBreakBefore: 'always' } : undefined}
+        >
+          {block.node}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PaginatedPages({
+  resume,
+  page,
+  scale,
+  id,
+  pageRef,
+  blocks,
+  pageBreaksBefore,
+  interactive,
+  onPageBreaksChange,
+}: {
+  resume: ResumeData
+  page: PageDims
+  scale: number
+  id?: string
+  pageRef?: React.Ref<HTMLDivElement>
+  blocks: RenderBlock[]
+  pageBreaksBefore: string[]
+  interactive: boolean
+  onPageBreaksChange?: (blockKeys: string[]) => void
+}) {
+  const { format } = resume
+  const effectiveAccent = format.atsMode ? '#1e293b' : format.accentColor
+  const compact = format.template === 'compact'
+  const pageWidthPx = page.w * PX_PER_IN
+  const pageHeightPx = page.h * PX_PER_IN
+  const marginPx = format.margin * PX_PER_IN
+  const contentBudgetPx = pageHeightPx - marginPx * 2
+  const sectionGapPx = compact ? SECTION_GAP_PX.compact : SECTION_GAP_PX.normal
+  const entryGapPx = compact ? ENTRY_GAP_PX.compact : ENTRY_GAP_PX.normal
+
+  const headerMeasureRef = useRef<HTMLDivElement>(null)
+  const blockMeasureRefs = useRef(new Map<string, HTMLDivElement>())
+  const [pages, setPages] = useState<RenderBlock[][]>([blocks])
+
+  useLayoutEffect(() => {
+    const headerH = (headerMeasureRef.current?.offsetHeight ?? 0) + HEADER_BOTTOM_MARGIN_PX
+    const heights = new Map<string, number>()
+    blocks.forEach((b) => {
+      const el = blockMeasureRefs.current.get(b.key)
+      if (el) heights.set(b.key, el.offsetHeight)
+    })
+
+    const computed: RenderBlock[][] = [[]]
+    let used = headerH
+    let prevInPage: RenderBlock | null = null
+
+    for (const block of blocks) {
+      const h = heights.get(block.key) ?? 0
+      const forced = pageBreaksBefore.includes(block.key)
+      const currentPage = computed[computed.length - 1]
+      const tentativeGap = prevInPage ? (prevInPage.sectionId === block.sectionId ? entryGapPx : sectionGapPx) : 0
+      const wouldOverflow = currentPage.length > 0 && used + tentativeGap + h > contentBudgetPx
+
+      if (currentPage.length > 0 && (forced || wouldOverflow)) {
+        computed.push([])
+        used = 0
+        prevInPage = null
+      }
+
+      const gapToAdd = prevInPage ? (prevInPage.sectionId === block.sectionId ? entryGapPx : sectionGapPx) : 0
+      used += gapToAdd + h
+      computed[computed.length - 1].push(block)
+      prevInPage = block
+    }
+
+    setPages(computed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks, pageBreaksBefore, contentBudgetPx, sectionGapPx, entryGapPx])
+
+  const gapElements = useRef(new Map<string, HTMLDivElement>())
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggingBlockKey, setDraggingBlockKey] = useState<string | null>(null)
+  const [dragTargetKey, setDragTargetKey] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isDragging) return
+    function handleMove(e: MouseEvent) {
+      let closestKey: string | null = null
+      let closestDist = Infinity
+      gapElements.current.forEach((el, key) => {
+        const rect = el.getBoundingClientRect()
+        const dist = Math.abs(e.clientY - (rect.top + rect.height / 2))
+        if (dist < closestDist) {
+          closestDist = dist
+          closestKey = key
+        }
+      })
+      if (closestKey) setDragTargetKey(closestKey)
+    }
+    function handleUp() {
+      setIsDragging(false)
+      setDraggingBlockKey((currentDragging) => {
+        setDragTargetKey((currentTarget) => {
+          if (currentDragging && currentTarget && currentDragging !== currentTarget) {
+            const next = pageBreaksBefore.filter((k) => k !== currentDragging)
+            if (!next.includes(currentTarget)) next.push(currentTarget)
+            onPageBreaksChange?.(next)
+          }
+          return null
+        })
+        return null
+      })
+    }
+    document.addEventListener('mousemove', handleMove)
+    document.addEventListener('mouseup', handleUp)
+    return () => {
+      document.removeEventListener('mousemove', handleMove)
+      document.removeEventListener('mouseup', handleUp)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging])
+
+  const activeBreaks =
+    isDragging && draggingBlockKey && dragTargetKey
+      ? pageBreaksBefore.map((k) => (k === draggingBlockKey ? dragTargetKey : k))
+      : pageBreaksBefore
+
+  const outerStyle: React.CSSProperties = {
+    fontFamily: format.fontFamily,
+    fontSize: `${format.fontSize}pt`,
+    lineHeight: format.lineHeight,
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  }
+
+  const pageBoxStyle: React.CSSProperties = {
+    width: `${page.w}in`,
+    minHeight: `${page.h}in`,
+    padding: `${format.margin}in`,
+  }
+
+  function renderGap(blockKey: string) {
+    return (
+      <PageBreakGap
+        blockKey={blockKey}
+        active={activeBreaks.includes(blockKey)}
+        interactive={interactive}
+        onSet={() => onPageBreaksChange?.([...pageBreaksBefore, blockKey])}
+        onClear={() => onPageBreaksChange?.(pageBreaksBefore.filter((k) => k !== blockKey))}
+        onDragStart={() => {
+          setIsDragging(true)
+          setDraggingBlockKey(blockKey)
+          setDragTargetKey(blockKey)
+        }}
+        gapRef={(el) => {
+          if (el) gapElements.current.set(blockKey, el)
+          else gapElements.current.delete(blockKey)
+        }}
+      />
+    )
+  }
+
+  return (
+    <div id={id} ref={pageRef} style={outerStyle}>
+      <div
+        aria-hidden="true"
+        style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', top: 0, left: -99999, width: pageWidthPx - marginPx * 2 }}
+      >
+        <div ref={headerMeasureRef}>
+          <Header contact={resume.contact} template={format.template} accentColor={effectiveAccent} atsMode={format.atsMode} />
+        </div>
+        {blocks.map((b) => (
+          <div
+            key={b.key}
+            ref={(el) => {
+              if (el) blockMeasureRefs.current.set(b.key, el)
+              else blockMeasureRefs.current.delete(b.key)
+            }}
+          >
+            {b.node}
+          </div>
         ))}
       </div>
+
+      {pages.map((pageBlocks, pageIndex) => (
+        <Fragment key={pageIndex}>
+          {pageIndex > 0 && pageBlocks[0] && renderGap(pageBlocks[0].key)}
+          <div className={`bg-white text-slate-800 shadow-2xl shadow-black/40 ${pageIndex > 0 ? 'mt-6' : ''}`} style={pageBoxStyle}>
+            {pageIndex === 0 && (
+              <Header contact={resume.contact} template={format.template} accentColor={effectiveAccent} atsMode={format.atsMode} />
+            )}
+            {pageBlocks.map((block, blockIndex) => (
+              <Fragment key={block.key}>
+                {blockIndex > 0 && renderGap(block.key)}
+                <div
+                  className={blockMarginClass(pageBlocks[blockIndex - 1], block, compact)}
+                  style={pageBreaksBefore.includes(block.key) ? { breakBefore: 'page', pageBreakBefore: 'always' } : undefined}
+                >
+                  {block.node}
+                </div>
+              </Fragment>
+            ))}
+          </div>
+        </Fragment>
+      ))}
     </div>
+  )
+}
+
+export interface ResumeDocumentProps {
+  resume: ResumeData
+  scale: number
+  viewAsPages?: boolean
+  id?: string
+  pageRef?: React.Ref<HTMLDivElement>
+  onPageBreaksChange?: (blockKeys: string[]) => void
+}
+
+/** Pure, context-free renderer of a resume as a styled paper page (or, in "view as pages" mode, a real
+ * multi-page layout). Takes resume data directly as a prop so it can be reused for the live editor
+ * preview and for read-only thumbnails (e.g. on the dashboard). */
+export function ResumeDocument({ resume, scale, viewAsPages, id, pageRef, onPageBreaksChange }: ResumeDocumentProps) {
+  const { format } = resume
+  const page = PAGE_SIZE_IN[format.pageSize]
+  const visibleSections = resume.sections.filter((s) => s.visible)
+  const effectiveAccent = format.atsMode ? '#1e293b' : format.accentColor
+  const blocks = buildBlocks(visibleSections, format.template, effectiveAccent)
+
+  if (!viewAsPages) {
+    return (
+      <SimplePage
+        resume={resume}
+        page={page}
+        scale={scale}
+        id={id}
+        pageRef={pageRef}
+        blocks={blocks}
+        pageBreaksBefore={resume.format.pageBreaksBefore}
+      />
+    )
+  }
+
+  return (
+    <PaginatedPages
+      resume={resume}
+      page={page}
+      scale={scale}
+      id={id}
+      pageRef={pageRef}
+      blocks={blocks}
+      pageBreaksBefore={resume.format.pageBreaksBefore}
+      interactive={!!onPageBreaksChange}
+      onPageBreaksChange={onPageBreaksChange}
+    />
   )
 }

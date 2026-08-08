@@ -94,8 +94,12 @@ export interface FormatSettings {
   pageSize: 'letter' | 'a4'
   accentColor: string
   atsMode: boolean
-  /** id of the section that should start on a new page, or null for no manual break */
-  pageBreakSectionId: string | null
+  /**
+   * Block keys that should each start a new page. A block is either a whole single-content section
+   * (Summary/Skills) or an individual entry within Experience/Education/Custom — see buildBlocks() in
+   * ResumeDocument.tsx for how keys are formed.
+   */
+  pageBreaksBefore: string[]
 }
 
 export interface ResumeData {

@@ -7,15 +7,7 @@ import { loadResumeData, saveResumeData } from './library'
 import type { ResumeData } from './types'
 
 function loadInitialState(resumeId: string): ResumeData {
-  const defaults = createDefaultResume()
-  const parsed = loadResumeData(resumeId)
-  if (!parsed) return defaults
-  return {
-    ...defaults,
-    ...parsed,
-    contact: { ...defaults.contact, ...parsed.contact },
-    format: { ...defaults.format, ...parsed.format },
-  }
+  return loadResumeData(resumeId) ?? createDefaultResume()
 }
 
 interface ResumeContextValue {

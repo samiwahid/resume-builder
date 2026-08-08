@@ -43,10 +43,18 @@ function blankResume(): ResumeData {
   }
 }
 
-/** Upgrades sections saved by older versions of the app to the current shape (e.g. flat skills string -> categories). */
+/**
+ * Upgrades data saved by older versions of the app to the current shape: flat skills string ->
+ * categories, and fills in any FormatSettings fields (e.g. pageBreaksBefore) that didn't exist yet
+ * when this resume was last saved.
+ */
 function migrateResumeData(data: ResumeData): ResumeData {
+  const defaults = createDefaultResume()
   return {
+    ...defaults,
     ...data,
+    contact: { ...defaults.contact, ...data.contact },
+    format: { ...defaults.format, ...data.format },
     sections: data.sections.map((s): Section => {
       if (s.kind === 'skills' && !Array.isArray((s as unknown as { categories?: unknown }).categories)) {
         const legacySkills = (s as unknown as { skills?: string }).skills ?? ''

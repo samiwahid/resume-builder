@@ -62,7 +62,7 @@ export function ResumePreview({ viewAsPages }: ResumePreviewProps) {
           viewAsPages={viewAsPages}
           id="resume-page"
           pageRef={pageRef}
-          onPageBreakChange={(sectionId) => dispatch({ type: 'SET_FORMAT', field: 'pageBreakSectionId', value: sectionId })}
+          onPageBreaksChange={(blockKeys) => dispatch({ type: 'SET_PAGE_BREAKS', blockKeys })}
         />
       </div>
     </div>
